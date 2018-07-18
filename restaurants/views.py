@@ -4,11 +4,27 @@ from .forms import RestaurantForm, ItemForm, SignupForm, SigninForm
 from django.contrib.auth import login, authenticate, logout
 from django.db.models import Q
 
-# This view will be used to favorite a restaurant
-def restaurant_favorite(request, restaurant_id):
-    
-    return
 
+from django.http import JsonResponse
+# This view will be used to favorite a restaurant
+
+
+def restaurant_favorite(request, restaurant_id):
+
+    obj = Restaurant.objects.get(id=restaurant_id)
+    
+    fav, created = FavoriteRestaurant.objects.get_or_create(user=request.user, restaurant=obj)
+    
+    if created:
+        action = "favorite"
+    else:
+        action = "unfavorite"
+        fav.delete()
+        
+    response = {
+        "action": action,
+    }
+    return JsonResponse(response, safe=False)
 
 # This view will be used to display only restaurants a user has favorited
 def favorite_restaurants(request):
@@ -81,6 +97,7 @@ def restaurant_list(request):
 def restaurant_detail(request, restaurant_id):
     restaurant = Restaurant.objects.get(id=restaurant_id)
     items = Item.objects.filter(restaurant=restaurant)
+
     context = {
         "restaurant": restaurant,
         "items": items,
